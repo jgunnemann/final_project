@@ -1,0 +1,271 @@
+---
+title: "Final Project" 
+author: "Julius Gunnemann" 
+date: "2/27/2020" 
+output: html_document 
+---
+
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = TRUE) 
+#Load required packages
+library(tidyverse)
+library(dplyr)
+library(fivethirtyeight)
+library(ggplot2)
+library(gt)
+library(fivethirtyeight)
+library(readxl)
+library(janitor)
+library(fastDummies)
+library(rvest)
+library(tidyselect)
+library(stringr)
+library(ggplot2)
+library(scales)
+library(skimr)
+library(broom)
+
+# input Stata file
+library(foreign)
+library(readstata13)
+
+```
+
+```{r, include=FALSE}
+#Load data 
+
+#Second, load a STATA dataset provided by the Government of Chad/local World Bank Office
+#rentals <- read.dta13("raw-data/rentals_reduced.dta")
+
+graph_1 <- rentals %>%
+  drop_na(treated) %>%
+  select(start_date, city, yrmonth, Berlin, count_month, cost_m2_month_reg_avg_t_B, cost_m2_month_reg_avg_c_B, cost_m2_month_reg_avg_c_H, treated,  cost_m2_month_reg_avg, cost_m2) %>%
+  group_by(yrmonth, treated) %>%
+  mutate(month_treated = mean(cost_m2))
+
+
+# Plot of all prices, control (HH B) vs treated (B)
+graph_1 %>%
+  ggplot( mapping = aes( x= start_date, y = cost_m2, color = city)) + 
+  geom_point(alpha = 0.3, size = 0.1) + 
+  theme_classic() + 
+  labs(
+    title = "Rental prices/m2: Berlin vs. Hamburg",
+    x = "Date", 
+    y = "Monthly rental prices in m2"
+  )
+  
+
+# Plot of average prices, control (HH B) vs treated (B)
+graph_2 <- graph_1 %>%
+  filter(Berlin == 1) 
+
+graph_2 %>%
+  ggplot( mapping = aes( x= start_date, y = cost_m2_month_reg_avg,  color=interaction(treated, city))) + 
+  geom_point(size = 0.1) + 
+  theme_classic() + 
+  labs(
+    title = "Berlin Rental prices/m2: Control & Treated",
+    x = "Date", 
+    y = "Monthly rental prices in m2"
+  )
+
+
+
+graph_2 %>%
+  ggplot( mapping = aes( x= yrmonth, y = cost_m2_month_reg_avg,  color=treated)) + 
+  geom_point(size = 0.5) + 
+   geom_smooth(aes(group=treated),
+              method = "nls", formula = y ~ a * x + b, se = FALSE,
+              method.args = list(start = list(a = 0.1, b = 0.1))) + 
+  theme_classic() + 
+  labs(
+    title = "Berlin Rental prices/m2: Control & Treated",
+    x = "Date", 
+    y = "Monthly rental prices in m2"
+  )
+
+graph_3 <- graph_2 %>%
+  group_by(treated, yrmonth) %>%
+  mutate(monthly_price_t = mean(cost_m2))
+
+
+#With two trend lines for treated vs. control
+graph_3 %>%
+  ggplot( mapping = aes( x= start_date, y = monthly_price_t,  color=treated)) + 
+  geom_point(size = 0.5) + 
+  geom_smooth(aes(group=treated),
+              method = "nls", formula = y ~ a * x + b, se = FALSE,
+              method.args = list(start = list(a = 0.1, b = 0.1))) + 
+  theme_classic() + 
+  labs(
+    title = "Berlin Rental prices/m2: Control & Treated",
+    x = "Date", 
+    y = "Monthly rental prices in m2"
+  )
+
+  
+```
+
+```{r, echo=FALSE}
+
+
+#With two trend smooth lines for treated vs. control
+graph_3 %>%
+  ggplot( mapping = aes( x= start_date, y = monthly_price_t,  color=treated)) + 
+  geom_point(size = 0.5) + 
+  geom_smooth(aes(group=treated),
+              method = "loess",
+              method.args = list(start = list(a = 0.1, b = 0.1))) + 
+  theme_classic() + 
+  labs(
+    title = "Rental prices/m2: Control vs. Treated",
+    x = "Date", 
+    y = "Monthly rental prices in m2"
+  )
+
+  
+  
+  #With two trend smooth lines for treated vs. control
+  graph_3 %>%
+    ggplot( mapping = aes( x= start_date, y = monthly_price_t,  color=treated)) + 
+    geom_point(size = 0.5) + 
+    geom_smooth(aes(group=treated), 
+                method = "lm", formula = y ~ poly(x, 3), se = TRUE) + 
+    geom_vline(xintercept = as.numeric(as.Date("2019-06-18")), linetype="dotted", 
+                  color = "red", size=1) + 
+    annotate(geom="text",x=as.Date("2019-02-01"),
+      y=18,label="Policy announcement") +
+    
+    geom_vline(xintercept = as.numeric(as.Date("2020-02-20")), linetype="dotted", 
+                  color = "blue", size=1) + 
+    annotate(geom="text",x=as.Date("2019-11-15"),
+      y=18,label="Policy in action") +
+    
+     geom_hline(yintercept = 6.5, linetype="solid", 
+                  color = "black", size=0.5) + 
+     annotate(geom="text",x=as.Date("2019-02-01"),
+      y=8,label="Price ceiling (treated)") +
+    theme_classic() +
+    labs(
+      title = "Berlin Rental prices/m2: Control & Treated",
+      x = "Date", 
+      y = "Monthly rental prices in m2"
+    )
+  
+
+
+```
+
+```{r, include=FALSE}
+
+graph_4 <- graph_2 %>%
+  group_by(treated, yrmonth) %>%
+  mutate(monthly_count = n())
+
+#Rental volume 
+glimpse(graph_4)
+
+
+#
+
+graph_4 %>%
+  ggplot( mapping = aes( x= start_date, y = monthly_count,  color=treated)) + 
+  geom_point(size = 0.5) + 
+  geom_smooth(aes(group=treated), 
+              method = "lm", formula = y ~ poly(x, 3), se = TRUE) + 
+  geom_vline(xintercept = as.numeric(as.Date("2019-06-18")), linetype="dotted", 
+                color = "red", size=1) + 
+      geom_vline(xintercept = as.numeric(as.Date("2019-06-18")), linetype="dotted", 
+                  color = "red", size=1) + 
+    annotate(geom="text",x=as.Date("2019-02-01"),
+      y=850,label="Policy announcement") +
+    
+    geom_vline(xintercept = as.numeric(as.Date("2020-02-20")), linetype="dotted", 
+                  color = "blue", size=1) + 
+    annotate(geom="text",x=as.Date("2019-11-15"),
+      y=850,label="Policy in action") +
+  theme_classic() + 
+  labs(
+    title = "Berlin Rental Volume: Control & Treated",
+    x = "Date", 
+    y = "Monthly rental prices in m2"
+  )
+
+```
+
+
+
+
+
+```{r, include=FALSE}
+
+#Diff in diff regression
+
+summary(rentals)
+glimpse(rentals)
+
+#Diff-in-diff estimation
+options(scipen = 999)
+did_model <- lm(ln_cost_m2 ~ treated_missing*timing_announced + 
+               Berlin + 
+               post_code + 
+               trend + trend_squared + 
+               nrooms + 
+               built_1918 + built_1918_49 + built_1950_64 + built_1965_72 + built_1973_90 + built_1991_03 + built_2003_13 + built_2014 
+             , data = rentals)  
+
+result <- did_model  %>%
+  tidy(conf.int = TRUE) %>%
+  select(term, estimate, conf.low, conf.high)
+
+# And now I finally prepare the final gt table
+
+
+is.num <- sapply(result, is.numeric)
+result[is.num] <- lapply(result[is.num], round, 3)
+
+
+gt_result <- result %>%
+  gt  %>%
+    tab_header(title = "Effect of Housing Policy on Rental Prices in Berlin", subtitle = "Logged housing rental prices") %>% 
+    cols_label(term = "Variable", 
+               estimate = "Estimate", 
+               conf.low = "Lower bound", 
+               conf.high = "Upper bound") 
+
+gt_result <- result %>%
+  gt  %>%
+    tab_header(title = "Effect of Housing Policy on Rental Prices in Berlin", subtitle = "Logged housing rental prices") %>% 
+    cols_label(term = "Variable", 
+               estimate = "Estimate", 
+               conf.low = "Lower bound", 
+               conf.high = "Upper bound")
+
+gt_result
+
+
+
+
+```
+
+## About
+This final project shows how seemingly small assumptions can drastically change
+estimates poverty rates in Sub-Saharan Africa. 
+
+I use the Government's of Chad's latest nationsl consumption data for to create standard poverty measures, such as the headcount index and the poverty gap, using the standard World Bank methodology. I combine this data with a panel dataset on inflation rates across countries, and a panel dataset of poverty measurements across the world. 
+
+I then show how assumptions about inflation rates, definitions of poverty lines,
+and adult equivalence for Chad not only drastically impact the measures, but also
+drastically change the country's position in poverty ranking relative to its peers. The point is to show that a few changes in assumptions can get a country to climb or fall several ranks in the world's poverty rankings.
+
+The output is a poverty heat map, as well as a dynamic country ranking that allows for manipulating input variables for Chad and then shows how its position changes in the ranking. 
+```{r, include = FALSE}
+```
+Data 
+
+For now I used 4 different sources of the data: 1) Government data from Chad with a household consumption dataset of >5,000 households, 2) World Bank panel data on world poverty estimates for each country over time, 3) IMF panel data on inflation for each country over time, 4) a list of country names, codes, and continents. 
+
+I downloaded, imported (.csv, .xlxs, .dta) all four and merged them togeter to have one dataset that I can use for my work. To do so, I changed the format of two datasets from wide to long, selected and merged variables. 
+

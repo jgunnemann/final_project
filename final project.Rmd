@@ -1,0 +1,175 @@
+---
+title: "Final Project" 
+author: "Julius Gunnemann" 
+date: "2/27/2020" 
+output: html_document 
+---
+
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = TRUE) 
+#Load required packages
+library(tidyverse)
+library(dplyr)
+library(fivethirtyeight)
+library(ggplot2)
+library(gt)
+library(fivethirtyeight)
+library(readxl)
+library(janitor)
+library(fastDummies)
+library(rvest)
+library(tidyselect)
+library(stringr)
+# input Stata file
+library(foreign)
+library(readstata13)
+
+```
+
+```{r, include=FALSE}
+#Load data 
+
+#First, import standard measures of poverty  across countries world-wide (https://data.worldbank.org/topic/poverty)
+world_poverty_data <- read_excel("raw-data/wb_poverty_data.xls", skip = 3, col_names = TRUE) %>%
+    clean_names() 
+
+#Second, load a STATA dataset provided by the Government of Chad/local World Bank Office
+chad_dd_data <- read.dta13("raw-data/PMT_with_indicators.dta")
+
+#Third, load data on inflation rates (CPI) for Chad
+world_inflation_data <- read_excel("raw-data/wb_inflation_data.xls", skip = 3, col_names = TRUE) %>%
+  clean_names()
+
+#Fourth, I import a csv with all country codes and continent info so that I can
+#later merge this file to the datasets and easily drop observations for all
+#countries outside Africa. I only keep code and continent info
+country_list <- read_csv("raw-data/country_list.csv") %>%
+  clean_names() %>%
+  select(continent_name, three_letter_country_code)
+
+#Next, select the required variables in all datasets: In the poverty data, we
+#only care about the poverty rate (headcount index), which measures what share
+#of the population lives with less than the poverty line, and the poverty gap,
+#which measures, what percentage of the poverty line, on average, they fall
+#short of meeting the line. The two indicators are called "SI.POV.GAPS and SI.POV.DDAY"
+
+world_poverty_indicators <- world_poverty_data %>%
+  filter(indicator_code %in% c("SI.POV.GAPS", "SI.POV.DDAY"))
+
+
+
+```
+
+
+```{r, include=FALSE}
+
+#Next, I change both datasets from wide to long format, using pivot_longer
+
+#I begin with the poverty dataset 
+temp_tidy <- 
+  world_poverty_data %>%
+    pivot_longer(
+      cols = starts_with("x"), 
+      names_prefix = "x",
+      names_to = "year", 
+      values_to = "poverty",
+      values_drop_na = TRUE
+  )
+
+#Next, I want to keep only the poverty head count and the poverty gap indicators
+#I choose both international definitions and filter for them, then arrange by 
+#country code and then year. 
+poverty_long <- temp_tidy %>%
+  filter(indicator_code == "SI.POV.DDAY") %>%
+  arrange(country_code, desc(year)) %>%
+  select(country_code, year, poverty)  
+
+  #I removed == "SI.POV.GAPS" |  indicator_code bc I did not need gap for now
+  
+
+#I remove temp datasets that I no longer need
+rm(temp_tidy)
+
+#Next, I want to keep only the inflation data for each year and want it in long
+#format
+
+temp_tidy <- 
+  world_inflation_data %>%
+    pivot_longer(
+      cols = starts_with("x"), 
+      names_prefix = "x",
+      names_to = "year", 
+      values_to = "inflation",
+      values_drop_na = TRUE
+  )
+#I arrange it by country_code and year
+inflation_long <- temp_tidy %>%
+  arrange(country_code, desc(year)) %>%
+  select(country_code, country_name, year, inflation)
+  
+#As a next step, I join the inflation and poverty datasets to create a temporary
+#full dataset
+temp_full <- inflation_long %>%
+  left_join(poverty_long, by=c("country_code" = "country_code", "year" = "year"))
+
+#Next, I merge the continent data to the main dataset and keep only African
+#countries
+full <- temp_full %>%
+  left_join(country_list, by = c("country_code" = "three_letter_country_code")) %>%
+  filter(year > 1980)
+
+#For clarity, I remove all temp datasets that I no longer need
+rm(temp_tidy, world_inflation_data, world_poverty_data, temp_full, wb_data, world_poverty_data, world_inflation_data, country_list, inflation_long, poverty_long, world_poverty_indicators)
+
+```
+
+```{r, include=FALSE}
+#Now I have a long dataset with poverty and inflation data on all African
+#countries. This dataset is called full. 
+
+
+#I create a variable that shows the latest available poverty headcount estimate,
+#without inflation adjustments.
+```
+
+```{r, echo=FALSE}
+
+full %>%
+    filter(year > 2010) %>%
+  filter(inflation < 50) %>%
+  filter(continent_name == "Africa" | continent_name == "Europe") %>%
+  ggplot(aes(x=year, y=inflation, color=continent_name)) + 
+  geom_point(alpha = 1/2) + 
+  xlab("Year 2000-2018") + 
+  ylab("Consumer Price Index (%)") + 
+  ggtitle("Inflation over time, Europe vs. Africa")
+```
+
+```{include=FALSE}
+full %>%
+  ggplot(full, aes(year, poverty_latest, label = rownames(country_code)) + geom_text()
+
+ggplot() + geom_point(full, aes(x=year, y=poverty, by=country))
+
+```
+
+## About
+This final project shows how seemingly small assumptions can drastically change
+estimates poverty rates in Sub-Saharan Africa. 
+
+I use the Government's of Chad's latest nationsl consumption data for to create standard poverty measures, such as the headcount index and the poverty gap, using the standard World Bank methodology. I combine this data with a panel dataset on inflation rates across countries, and a panel dataset of poverty measurements across the world. 
+
+I then show how assumptions about inflation rates, definitions of poverty lines,
+and adult equivalence for Chad not only drastically impact the measures, but also
+drastically change the country's position in poverty ranking relative to its peers. The point is to show that a few changes in assumptions can get a country to climb or fall several ranks in the world's poverty rankings.
+
+The output is a poverty heat map, as well as a dynamic country ranking that allows for manipulating input variables for Chad and then shows how its position changes in the ranking. 
+```{r, include = FALSE}
+```
+Data 
+
+For now I used 4 different sources of the data: 1) Government data from Chad with a household consumption dataset of >5,000 households, 2) World Bank panel data on world poverty estimates for each country over time, 3) IMF panel data on inflation for each country over time, 4) a list of country names, codes, and continents. 
+
+I downloaded, imported (.csv, .xlxs, .dta) all four and merged them togeter to have one dataset that I can use for my work. To do so, I changed the format of two datasets from wide to long, selected and merged variables. 
+
