@@ -5,7 +5,6 @@ date: "2/27/2020"
 output: html_document 
 ---
 
-
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(echo = TRUE) 
 
@@ -33,9 +32,11 @@ library(readstata13)
 
 ```
 
-## About
+## Berlin's Radical Housing Policy
 
-Did Berlin do well in imposing a rental ceiling to keep housing affordable? 
+Did Berlin do well to impose a rental price ceiling to keep housing affordable? 
+
+## Background 
 
 Rising apartment rental prices have become Berlin’s most prominent public policy issue. Last fall, tens of thousand of people in Berlin took to the streets to demonstrate against fast increasing apartment rental prices. The demonstrators claim the rent hike has made housing unaffordable and is spurring gentrification, attacking the core of what they believe makes Berlin special: a “poor but sexy” city (The Economist, 2006) that draws a diverse crowd that chooses Berlin for its comparatively low cost of living. Backed by several leading political parties, demonstrators demand further tightening of regulation as well as the expropriations of leading large real estate investment funds (Deutsche Welle, 2019). These calls have caused anxiety amongst investors and led large funds to divest from their Berlin portfolios. 
 
@@ -43,12 +44,15 @@ Growth in apartment rental prices is driven in large part by an increasing housi
 
 Even in international comparison, Berlin’s real estate price boom is remarkable. Over the past decade, the growth in Berlin’s real estate prices has outstripped that of most major international cities. In Berlin average house prices relative to income have almost doubled since 2010, which is more than in any other city in Europe, and second to only Hong Kong (see Figure, The Economist, 2020). Over the same period, rental prices have largely moved in tandem, increasing by 60 percent since 2010 (Statista, 2019). 
 
+## The policy 
+
 Since 2015, the coalition has tried to slow down the hike in apartment rental prices. Concerns over increasing rental prices have led the leftist city coalition to slow down rental price increases by imposing a restriction on by how much landlords can raise rents (henceforth “rent brake”). Landlords were allowed to increase rent no more than 15% every three years. When new tenants moved in, landlords could not charge more than 10 percent more than prices listed in a district-level rental index. However, a few exceptions – such as when apartments were rented furnished or when they were recently renovated – led some landlords to find ways to charge rents high above the threshold. The loopholes have made the regulatory attempts largely ineffective, with growth in both real estate prices and rental prices further accelerating since 2015 (The Economist, 2020, Statista, 2019).
 
 In 2020, the coalition took a much more drastic measure by imposing a citywide maximum apartment rental price at less than 50% of current average rental prices. As of 30 January 2020, a new law became effective that imposes a maximum price per square meter of 6.49 EUR (henceforth “rent ceiling”), for all apartments built after 2004. Any rental contract (except those for apartments built after 2004) cannot exceed this rental price and landlords are required to adjust down existing contracts with rental prices above the rent ceiling, even forced to even reimburse tenants retroactively any rent charged above the rent cover since 18 June 2019. The newly imposed rent cap is drastic. Before the rent cap, city-wide average rental prices ranged between 13 EUR/sqm to 16 EUR/sqm (depending on apartment size), with averages in the city center often being as high as 25 EUR/sqm (Wohnungsboerse, 2020). By exempting new-builds from the regulation, policy makers hope to spur new developments. Predictably, the new rules were commended by many tenants but caused outrage amongst landlords and professional investors, calling the new policies a return to socialist housing policy. Liberal as well as center-right political parties are preparing an appeal before Germany’s Constitutional Court. While many experts predict the Constitutional Court to rule the new policy as unconstitutional, this process is likely to take several years during which they city will impose heavy fines on any landlords that to not abide by the new rules (Deloitte, 2019). 
 
-This policy paper asks whether Berlin’s intervention in the housing market is likely to be effective in stabilizing rental prices and easing the housing shortage. Although getting recent enough data may be challenging, I will try to assess what impacts – if any – the policy changes have had on outcomes such as (i) apartment rental prices, (ii) real estate prices and (iii) the number of transactions in the real estate market. I study public announcements of new reforms as well as the dates those became effective as policy shocks to the housing market. In further work, I plan to create a policy uncertainty index to further track time-varying uncertainty around regulation. I do this by scraping news articles on the topic, counting terms related to “uncertainty” as well as terms related to the “housing market” (I have done so in previous work on policy uncertainty in the EU). 
+## This projet
 
+This policy paper asks whether Berlin’s intervention in the housing market is likely to be effective in stabilizing rental prices and easing the housing shortage. Although getting recent enough data may be challenging, I will try to assess what impacts – if any – the policy changes have had on outcomes such as (i) apartment rental prices, (ii) real estate prices and (iii) the number of transactions in the real estate market. I study public announcements of new reforms as well as the dates those became effective as policy shocks to the housing market. In further work, I plan to create a policy uncertainty index to further track time-varying uncertainty around regulation. I do this by scraping news articles on the topic, counting terms related to “uncertainty” as well as terms related to the “housing market” (I have done so in previous work on policy uncertainty in the EU). 
 
 This analysis is structured into four components. First, I analyze developments across a range of important housing indicators over the past decade. I use historical data on rental prices, real estate prices as well as building permits (both e.g. roof additions to existing buildings and new developments) to assess how the fundamentals developed in response to recent policy decisions. Where possible, I also study trends in real estate investments in Berlin from national and international players and whether policy decisions correlate with the number of real estate transactions. I will contact the regional statistics bureau, the relevant city offices as well as the tax collection office to get actual data of realized transactions and rental contracts. Second, I estimate supply and demand curves for housing in Berlin, and, in a stylized fashion, present how both supply and demand have changed over the past decade. Third, where possible, I attempt to complement official sources of transaction data with market data on apartment rental and real estate offer prices from leading online real estate providers, such as ImmoScout24 and Immowelt. Both online services capture a significant share of the total rental and buying market. I do so by either scraping data of currently available offers, and by contacting the providers to ask for access to their private databases. I use this data to assess what impacts the new regulation – that is, the announcement of the rent brake and the rent ceiling – had on outcomes. Finally, I conclude with policy recommendations for the city of Berlin. 
 
@@ -68,16 +72,16 @@ graph_1 <- rentals %>%
 
 # Plot of all prices, control (HH B) vs treated (B)
 ggplot_1 <- graph_1 %>%
-  ggplot( mapping = aes( x= start_date, y = cost_m2, color = city)) + 
+  ggplot( mapping = aes( x= start_date, y = cost_m2, color =factor(treated))) + 
   geom_point(alpha = 0.3, size = 0.1) + 
   theme_classic() + 
   labs(
-    title = "Rental prices/m2: Berlin vs. Hamburg",
+    title = "Rental prices/m2: Treated vs. Control",
     x = "Date", 
     y = "Monthly rental prices in m2"
-  )
+  ) + 
+  labs(color='Assignment (T=1, C=0)') 
   
-
 
 # Plot of average prices, control (HH B) vs treated (B)
 graph_2 <- graph_1 %>%
@@ -134,7 +138,7 @@ graph_3 %>%
   
 ```
 
-## All prices 01/2018 - 03/2020  
+## All prices 
 
 ```{r Prices_output, echo = FALSE}
 
@@ -144,6 +148,8 @@ ggplot_1
 
 ```
 
+I was fortunate to get data with about 10.5 million observations. My data have 70,000 individual apartment rental offers  for Hamburg and Berlin, which each have about 150 explanatory variables. The observations each have all very important variables that allow for clean identification (incl. location, year built, condition of the building, whether or not it is furnished, and data that allows me to identify whether or not the apartment will be affected by the new policy. The data also include details on amenities, such as whether the apartment has a kitchen,a second guest bathroom, floor heating, balcony, etc.
+                        
 When adjusting for size of the apartments, I can get a sense for the average rental prices paid in apartments per square meter (EUR/m2), and compare treated with control. As the following graph shows, average rental prices vary around 10 EUR/m2, with significant spread in both cities. What's also visible in the graph is that the holidays around Christmas affect the volume of the market. That is, much fewer rental apartments go online in the days between 15 and 30 December
 
 ```{r Prices_avg, include=FALSE}
@@ -152,8 +158,8 @@ When adjusting for size of the apartments, I can get a sense for the average ren
 
 #With two trend smooth lines for treated vs. control
 
-  graph_3 %>%
-    ggplot( mapping = aes( x= start_date, y = monthly_price_t,  color=treated)) + 
+ggplot_3 <-  graph_3 %>%
+    ggplot( mapping = aes( x= start_date, y = monthly_price_t,  color=factor(treated))) + 
     geom_point(size = 0.5) + 
     geom_smooth(aes(group=treated), 
                 method = "lm", formula = y ~ poly(x, 3), se = TRUE) + 
@@ -176,7 +182,9 @@ When adjusting for size of the apartments, I can get a sense for the average ren
       title = "Berlin Rental prices/m2: Control & Treated",
       x = "Date", 
       y = "Monthly rental prices in m2"
-    )
+    ) + 
+  labs(color='Assignment (T=1, C=0)') 
+
 ```
 
 
@@ -187,7 +195,7 @@ When adjusting for size of the apartments, I can get a sense for the average ren
 
 # Show graph on average prices 
 
-graph_3
+ggplot_3
 
 ```
 
@@ -209,7 +217,7 @@ glimpse(graph_4)
 
 #
 ggplot_4 <- graph_4 %>%
-  ggplot( mapping = aes( x= start_date, y = monthly_count,  color=treated)) + 
+  ggplot( mapping = aes( x= start_date, y = monthly_count,  color=factor(treated))) + 
   geom_point(size = 0.5) + 
   geom_smooth(aes(group=treated), 
               method = "lm", formula = y ~ poly(x, 3), se = TRUE) + 
@@ -229,13 +237,14 @@ ggplot_4 <- graph_4 %>%
     title = "Berlin Rental Volume: Control & Treated",
     x = "Date", 
     y = "Monthly rental prices in m2"
-  )
+  ) + 
+  labs(color='Assignment (T=1, C=0)') 
 ```
 
 
 ## Volume 
 
-```{r Volume_output, include=FALSE}
+```{r Volume_output, echo=FALSE}
 
 # Show graph on volume 
 
@@ -257,7 +266,7 @@ glimpse(rentals)
 
 #Diff-in-diff estimation
 options(scipen = 999)
-did_model <- lm(ln_cost_m2 ~ treated_missing*timing_announced + 
+did_model <- lm(ln_cost_m2 ~ treated*timing_announced + 
                Berlin + 
                post_code + 
                trend + trend_squared + 
@@ -284,13 +293,6 @@ gt_result <- result %>%
                conf.low = "Lower bound", 
                conf.high = "Upper bound") 
 
-gt_result <- result %>%
-  gt  %>%
-    tab_header(title = "Effect of Housing Policy on Rental Prices in Berlin", subtitle = "Logged housing rental prices") %>% 
-    cols_label(term = "Variable", 
-               estimate = "Estimate", 
-               conf.low = "Lower bound", 
-               conf.high = "Upper bound")
 ```
 
 
@@ -305,11 +307,11 @@ gt_result
 
 The above table above shows the difference in difference estimation.  The table shows the intercept followed by treated_missing which is treatment dummy, i.e. the coefficient that documents the initial difference, and timing_announced, which is the dummy that picks up the policy announcement. Next follow dummy variables for the City (Berlin) as well as variabel that identifies the post_codes, a time trend, the time trend squared, the number of rooms per apartment, the time period it was built, and finally the difference-in-difference estimator, which is the interaction term between the treatment and the timing dummy.
 
-##Data
+## Data
 
 Empirica Systems GmbH kindly provided me with the data that they scraped from all leading real estate portals. 
 
-##References (suggestive)
+## References (suggestive)
 
 Deloitte. (2019). “On the road to the rent cap – the draft law of the “MietenWoG Bln”” https://www2.deloitte.com/dl/en/pages/legal/articles/mietendeckel-berlin.html
 

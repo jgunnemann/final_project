@@ -8,7 +8,6 @@ output: html_document
 
 ```{r setup, include=FALSE} 
 knitr::opts_chunk$set(echo = TRUE) 
-
 #Load required packages
 library(tidyverse)
 library(dplyr)
@@ -144,13 +143,11 @@ ggplot_1
 
 ```
 
-When adjusting for size of the apartments, I can get a sense for the average rental prices paid in apartments per square meter (EUR/m2), and compare treated with control. As the following graph shows, average rental prices vary around 10 EUR/m2, with significant spread in both cities. What's also visible in the graph is that the holidays around Christmas affect the volume of the market. That is, much fewer rental apartments go online in the days between 15 and 30 December
+
 
 ```{r Prices_avg, include=FALSE}
-
 #Monthly average prices for treated and control, 
-
-#With two trend smooth lines for treated vs. control
+  #With two trend smooth lines for treated vs. control
 
   graph_3 %>%
     ggplot( mapping = aes( x= start_date, y = monthly_price_t,  color=treated)) + 
@@ -191,12 +188,6 @@ graph_3
 
 ```
 
-A more useful way to cut the data is to look at monthly averages in both treated and control. In the graph below, I am 
-comparing the apartments affected by the policy in Berlin with those not affected (which could be either new builds in 
-Berlin or apartments in Hamburg. Those not affected by the policy are trading at a premium throughout. This is because 
-Hamburg's rental prices are higher than Berlin's and also because those apartments in Berlin that are exempt from the policy
-are new builds from after 2014. Those typically are more popular with tenants, as they include a wider range of amenities
-                          
 ```{r Volume, include=FALSE}
 #Next, count the volume per day for both control and treated
 
@@ -243,12 +234,9 @@ ggplot_4
 
 ```
 
-A look at volume of the offers in the rental market illustrates that both might be happening. The market for treated apartments slowed down dramatically after the onset of the policy. The volume more than halved from levels of about 700 units per month to less than 300 units per month. This suggests that at least half the landlords indeed keep their apartments vacant.
 
 ## Diff-in-Diff Approach
 
-To answer the question analytically, I conduct a difference-in-difference estimation, comparing how the treatment group of apartments (those affected by the policy) evolved relative to the control group. To do so, I regress the log of apartment rental prices on a dummy variable that is 0 before the policy goes into effect, and 1 after it has come into effect (variable called timing), on a treatment dummy variable that is 0 for control units and 1 for treatment units, as well as a range of controls, such as the year the apartment was built, the post code area it is in, its amenities, etc.
-                          
 ```{r Diff_in_Diff, include=FALSE}
 #Diff in diff regression
 
@@ -295,15 +283,16 @@ gt_result <- result %>%
 
 
 
-```{r Diff_in_Diff_output, echo=FALSE}
+```{r Diff_in_Diff_output, include=FALSE}
 
 #Show result of Diff-in-Diff estimation
 
 gt_result
 
+
 ```
 
-The above table above shows the difference in difference estimation.  The table shows the intercept followed by treated_missing which is treatment dummy, i.e. the coefficient that documents the initial difference, and timing_announced, which is the dummy that picks up the policy announcement. Next follow dummy variables for the City (Berlin) as well as variabel that identifies the post_codes, a time trend, the time trend squared, the number of rooms per apartment, the time period it was built, and finally the difference-in-difference estimator, which is the interaction term between the treatment and the timing dummy.
+The table above shows the difference in difference estimation. 
 
 ##Data
 

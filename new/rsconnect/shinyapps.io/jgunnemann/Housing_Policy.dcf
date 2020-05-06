@@ -1,0 +1,12 @@
+name: Housing_Policy
+title: Housing_Policy
+username:
+account: jgunnemann
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2245833
+bundleId: 3110043
+url: https://jgunnemann.shinyapps.io/Housing_Policy/
+when: 1588753689.11634
+asMultiple: FALSE
+asStatic: FALSE

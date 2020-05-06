@@ -1,5 +1,4 @@
 # Load the packages 
-
 library(markdown)
 library(shiny)
 library(tidyverse)
@@ -7,8 +6,10 @@ library(dplyr)
 library(fivethirtyeight)
 library(ggplot2)
 library(gt)
+library(fivethirtyeight)
 library(readxl)
 library(janitor)
+library(fastDummies)
 library(rvest)
 library(tidyselect)
 library(stringr)
@@ -18,12 +19,10 @@ library(skimr)
 library(broom)
 
 # Load packages for using input Stata file
-
 library(foreign)
 library(readstata13)
 
 #Load a STATA dataset provided by the Government of Chad/local World Bank Office
-
 rentals <- read.dta13("raw-data/rentals_reduced.dta", nonint.factors = TRUE)
 
 #Create graph as per main Rmd. See further comments there. 
@@ -309,9 +308,9 @@ ui <- fluidPage(
                         gt_output(outputId = "table"), 
                         br(),
                         
-                        p("The result shows that, the very last coefficient, the diff-in-diff estimator is indeed precisely estimated and statistically significant at the 1% level. 
-                          It is economically very small though. It means that the policy in Berlin has led to a 2% decrease in apartment prices. This is 
-                          hardly enough for the tenant and far from the goal of reducing rent to 6.50 EUR per square meter. ")
+                        p("The result shows that, the very last coefficient, the diff-in-diff estimator is negative but not precisely estimated and 
+                          statistically insignificant at the 1% level. It is also economically very small It means that the policy in Berlin has led 
+                          to no measurable decrease in apartment prices. This suggests that policy was not effective. ")
                         )
 )
 )
